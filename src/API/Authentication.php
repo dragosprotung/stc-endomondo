@@ -63,16 +63,10 @@ class Authentication
         );
 
         $responseBody = $response->getBody()->getContents();
-        $lines = explode("\n", $responseBody);
+        $response = parse_ini_string($responseBody);
 
-        if ($lines[0] === 'OK') {
-            foreach ($lines as $line) {
-                $line = explode('=', $line, 2);
-                switch ($line[0]) {
-                    case 'authToken':
-                        return new static(trim($line[1]));
-                }
-            }
+        if (array_key_exists('authToken', $response)) {
+            return new static($response['authToken']);
         }
 
         throw new InvalidCredentialsException('Authentication on Endomondo failed.');
@@ -82,5 +76,4 @@ class Authentication
     {
         return $this->token();
     }
-
 }
