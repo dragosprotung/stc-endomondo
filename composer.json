@@ -1,0 +1,26 @@
+{
+  "name": "dragosprotung/stc-endomondo",
+  "description": "Connector for Endomondo",
+  "keywords": [
+    "endomondo"
+  ],
+  "homepage": "https://github.com/dragosprotung/stc-endomondo",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Dragos Protung",
+      "email": "dragos@protung.ro",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "dragosprotung/stc-core": "dev-master",
+    "guzzlehttp/guzzle": "^6.2"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^5.5"
+  },
+  "scripts": {
+    "test": "phpunit --coverage-text"
+  }
+}
