@@ -1,0 +1,38 @@
+{
+  "data": [
+    {
+      "duration": 817,
+      "start_time": "2016-08-28 13:11:09 UTC",
+      "distance": 2.0241999511719,
+      "is_valid": true,
+      "id": 1,
+      "calories": 246,
+      "burgers_burned": 0.45555556,
+      "sport": 0,
+      "live": false
+    },
+    {
+      "duration": 885,
+      "start_time": "2016-08-28 12:55:17 UTC",
+      "distance": 7.073,
+      "is_valid": true,
+      "id": 2,
+      "calories": 299,
+      "burgers_burned": 0.5537037,
+      "sport": 2,
+      "live": false
+    },
+    {
+      "duration": 420,
+      "start_time": "2016-08-28 12:46:01 UTC",
+      "distance": 0.26120001220703,
+      "is_valid": true,
+      "id": 3,
+      "calories": 100,
+      "burgers_burned": 0.18518518,
+      "sport": 20,
+      "live": false
+    }
+  ],
+  "more": false
+}
