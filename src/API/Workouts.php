@@ -42,6 +42,10 @@ class Workouts
      */
     protected $client;
 
+    /**
+     * @param Authentication $authentication
+     * @param Client $client
+     */
     public function __construct(Authentication $authentication, Client $client)
     {
         $this->authentication = $authentication;
@@ -121,14 +125,14 @@ class Workouts
     public function postTrack(Track $track, string $sport)
     {
         $deviceWorkoutId = $this->generateDeviceWorkoutId();
-        $duration = $track->getDuration()->getTotalSeconds();
+        $duration = $track->duration()->totalSeconds();
 
         $workoutId = null;
         $previousPoint = null;
         $distance = 0;
         $speed = 0;
         // Split in chunks of 100 points like the mobile app.
-        foreach (array_chunk($track->getTrackPoints(), 100) as $trackPoints) {
+        foreach (array_chunk($track->trackPoints(), 100) as $trackPoints) {
             $data = array();
             /** @var TrackPoint[] $trackPoints */
             foreach ($trackPoints as $trackPoint) {
@@ -165,22 +169,22 @@ class Workouts
      */
     private function flattenEndWorkoutTrackPoint(Track $track, $speed)
     {
-        $endDateTime = clone $track->getEndDateTime();
+        $endDateTime = clone $track->endDateTime();
         $endDateTime->setTimezone(new \DateTimeZone('UTC'));
-        $distance = $track->getLength();
-        $lastTrackPoint = $track->getLastTrackPoint();
+        $distance = $track->length();
+        $lastTrackPoint = $track->lastTrackPoint();
 
         $totalAscent = $lastTrackPoint->getElevation(); // TODO Compute it from the track, this is not correct.
 
         return $this->formatEndomondoTrackPoint(
             $endDateTime,
             self::INSTRUCTION_STOP,
-            $lastTrackPoint->getLatitude(),
-            $lastTrackPoint->getLongitude(),
+            $lastTrackPoint->latitude(),
+            $lastTrackPoint->longitude(),
             $distance,
             $speed,
             $totalAscent,
-            $lastTrackPoint->hasExtension(HR::ID()) ? $lastTrackPoint->getExtension(HR::ID())->value() : ''
+            $lastTrackPoint->hasExtension(HR::ID()) ? $lastTrackPoint->extension(HR::ID())->value() : ''
         );
     }
 
@@ -240,18 +244,18 @@ class Workouts
      */
     private function flattenTrackPoint(TrackPoint $trackPoint, $distance, $speed) : string
     {
-        $dateTime = clone $trackPoint->getDateTime();
+        $dateTime = clone $trackPoint->dateTime();
         $dateTime->setTimezone(new \DateTimeZone('UTC'));
 
         return $this->formatEndomondoTrackPoint(
             $dateTime,
             self::INSTRUCTION_START,
-            $trackPoint->getLatitude(),
-            $trackPoint->getLongitude(),
+            $trackPoint->latitude(),
+            $trackPoint->longitude(),
             $distance,
             $speed,
             $trackPoint->getElevation(),
-            $trackPoint->hasExtension(HR::ID()) ? $trackPoint->getExtension(HR::ID())->value() : ''
+            $trackPoint->hasExtension(HR::ID()) ? $trackPoint->extension(HR::ID())->value() : ''
         );
     }
 

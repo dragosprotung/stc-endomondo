@@ -14,7 +14,7 @@
     }
   ],
   "require": {
-    "dragosprotung/stc-core": "dev-master",
+    "dragosprotung/stc-core": "~2.0@dev",
     "guzzlehttp/guzzle": "^6.2",
     "ramsey/uuid": "^3.5"
   },
@@ -33,5 +33,10 @@
   },
   "scripts": {
     "test": "phpunit --coverage-text"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0-dev"
+    }
   }
 }

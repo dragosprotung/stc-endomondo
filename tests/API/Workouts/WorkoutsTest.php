@@ -88,7 +88,7 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
         $track = new Track($trackPoints);
 
         $workout = $this->createMock(Workout::class);
-        $workout->expects(static::any())->method('getTracks')->will(static::returnValue(array($track)));
+        $workout->expects(static::any())->method('tracks')->will(static::returnValue(array($track)));
 
         $authentication = Authentication::fromToken('token');
 
@@ -162,15 +162,15 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
         $trackPointMock = $this->createMock(TrackPoint::class);
         $trackPointMock
             ->expects(static::any())
-            ->method('getDateTime')
+            ->method('dateTime')
             ->will(static::returnValue($dateTime));
         $trackPointMock
             ->expects(static::any())
-            ->method('getLatitude')
+            ->method('latitude')
             ->will(static::returnValue(($latitude + $call) / 100000));
         $trackPointMock
             ->expects(static::any())
-            ->method('getLongitude')
+            ->method('longitude')
             ->will(static::returnValue(($longitude + $call) / 1000000));
         $trackPointMock
             ->expects(static::any())
