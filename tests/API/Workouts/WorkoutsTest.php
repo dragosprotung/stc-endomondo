@@ -7,7 +7,9 @@ namespace SportTrackerConnector\Endomondo\Test\API\Workouts;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
+use Psr\Http\Message\RequestInterface;
 use SportTrackerConnector\Core\Workout\Track;
 use SportTrackerConnector\Core\Workout\TrackPoint;
 use SportTrackerConnector\Core\Workout\Workout;
@@ -73,13 +75,15 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
 
         $workouts = new Workouts($authentication, $client);
         $actual = $workouts->listWorkouts(new \DateTime('-2 weeks'), new \DateTime('now'));
-        static::assertJsonStringEqualsJsonFile(__DIR__ . '/Expected/' . $this->getName() . '.json',
-            json_encode($actual));
+        static::assertJsonStringEqualsJsonFile(
+            __DIR__ . '/Expected/' . $this->getName() . '.json',
+            json_encode($actual)
+        );
     }
 
     public function testPostTrackSuccess()
     {
-        $trackPoints = array_merge($this->getTrackPointMocks(150, true), $this->getTrackPointMocks(150));
+        $trackPoints = array_merge($this->getTrackPointMocks(150, true), $this->getTrackPointMocks(140));
 
         $track = new Track($trackPoints);
 
@@ -87,6 +91,9 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
         $workout->expects(static::any())->method('getTracks')->will(static::returnValue(array($track)));
 
         $authentication = Authentication::fromToken('token');
+
+        $container = array();
+        $history = Middleware::history($container);
 
         $mockHandler = new MockHandler(
             [
@@ -97,10 +104,23 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
             ]
         );
         $handler = HandlerStack::create($mockHandler);
+        $handler->push($history);
+
         $client = new Client(['handler' => $handler]);
 
         $workouts = new Workouts($authentication, $client);
         $workoutId = $workouts->postTrack($track, SportMapper::RUNNING);
+
+        foreach ($container as $i => $transaction) {
+            /** @var RequestInterface $request */
+            $request = $transaction['request'];
+            static::assertSame('POST', $request->getMethod());
+
+            static::assertStringEqualsFile(
+                __DIR__ . '/Expected/' . $this->getName() . '-' . $i . '.txt',
+                gzdecode($request->getBody()->getContents())
+            );
+        }
 
         static::assertSame('123456789', $workoutId);
     }
@@ -130,28 +150,39 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
      */
     private function getTrackPointMock($distance = null)
     {
+        static $call = 1;
+
+        $dateTime = new \DateTime('2016-01-01 00:00:00');
+        $dateTime->add(\DateInterval::createFromDateString('+' . $call . ' seconds'));
+
+        $latitude = 5352479;
+        $longitude = 10000000;
+        $elevation = $call % 1000;
+
         $trackPointMock = $this->createMock(TrackPoint::class);
         $trackPointMock
             ->expects(static::any())
             ->method('getDateTime')
-            ->will(static::returnValue(new \DateTime()));
+            ->will(static::returnValue($dateTime));
         $trackPointMock
             ->expects(static::any())
             ->method('getLatitude')
-            ->will(static::returnValue(random_int(5353479, 5353579) / 100000));
+            ->will(static::returnValue(($latitude + $call) / 100000));
         $trackPointMock
             ->expects(static::any())
             ->method('getLongitude')
-            ->will(static::returnValue(random_int(10000000, 10100000) / 1000000));
+            ->will(static::returnValue(($longitude + $call) / 1000000));
         $trackPointMock
             ->expects(static::any())
             ->method('getElevation')
-            ->will(static::returnValue(random_int(0, 100)));
+            ->will(static::returnValue($elevation));
         if ($distance !== null) {
             $trackPointMock->expects(static::any())->method('hasDistance')->will(static::returnValue(true));
             $trackPointMock->expects(static::any())->method('getDistance')->will(static::returnValue($distance));
         }
         $trackPointMock->expects(static::any())->method('hasExtension')->with('HR')->will(static::returnValue(false));
+
+        $call++;
 
         return $trackPointMock;
     }
