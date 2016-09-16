@@ -174,11 +174,11 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
             ->will(static::returnValue(($longitude + $call) / 1000000));
         $trackPointMock
             ->expects(static::any())
-            ->method('getElevation')
+            ->method('elevation')
             ->will(static::returnValue($elevation));
         if ($distance !== null) {
             $trackPointMock->expects(static::any())->method('hasDistance')->will(static::returnValue(true));
-            $trackPointMock->expects(static::any())->method('getDistance')->will(static::returnValue($distance));
+            $trackPointMock->expects(static::any())->method('distance')->will(static::returnValue($distance));
         }
         $trackPointMock->expects(static::any())->method('hasExtension')->with('HR')->will(static::returnValue(false));
 

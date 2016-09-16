@@ -43,8 +43,8 @@ class EndomondoTracker extends AbstractTracker
         $json = $this->endomondoWorkouts->getWorkout($idWorkout);
 
         $workout = new Workout();
-        $track = new Track();
-        $track->setSport($this->sportMapper()->sportFromCode((string)$json['sport']));
+        $sport = $this->sportMapper()->sportFromCode((string)$json['sport']);
+        $track = new Track(array(), $sport);
 
         if (array_key_exists('points', $json)) {
             foreach ($json['points'] as $point) {

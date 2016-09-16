@@ -137,9 +137,9 @@ class Workouts
             /** @var TrackPoint[] $trackPoints */
             foreach ($trackPoints as $trackPoint) {
                 if ($trackPoint->hasDistance() === true) {
-                    $distance = $trackPoint->getDistance();
+                    $distance = $trackPoint->distance();
                 } elseif ($previousPoint !== null) {
-                    $distance += $trackPoint->distance($previousPoint);
+                    $distance += $trackPoint->distanceFromPoint($previousPoint);
                 }
                 if ($previousPoint !== null) {
                     $speed = $trackPoint->speed($previousPoint);
@@ -174,7 +174,7 @@ class Workouts
         $distance = $track->length();
         $lastTrackPoint = $track->lastTrackPoint();
 
-        $totalAscent = $lastTrackPoint->getElevation(); // TODO Compute it from the track, this is not correct.
+        $totalAscent = $lastTrackPoint->elevation(); // TODO Compute it from the track, this is not correct.
 
         return $this->formatEndomondoTrackPoint(
             $endDateTime,
@@ -254,7 +254,7 @@ class Workouts
             $trackPoint->longitude(),
             $distance,
             $speed,
-            $trackPoint->getElevation(),
+            $trackPoint->elevation(),
             $trackPoint->hasExtension(HR::ID()) ? $trackPoint->extension(HR::ID())->value() : ''
         );
     }
