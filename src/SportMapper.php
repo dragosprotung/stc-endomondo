@@ -70,7 +70,7 @@ class SportMapper extends AbstractSportMapper
     /**
      * {@inheritdoc}
      */
-    public function getMap() : array
+    public function getMap(): array
     {
         return array(
             self::RUNNING => self::SPORT_RUNNING,

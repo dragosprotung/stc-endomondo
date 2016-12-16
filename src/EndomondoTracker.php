@@ -4,21 +4,20 @@ declare(strict_types = 1);
 
 namespace SportTrackerConnector\Endomondo;
 
-use DateTime;
-use DateTimeZone;
-use SportTrackerConnector\Core\Tracker\AbstractTracker;
-use SportTrackerConnector\Core\Tracker\TrackerListWorkoutsResult;
+use SportTrackerConnector\Core\Tracker\TrackerInterface;
 use SportTrackerConnector\Core\Workout\Extension\HR;
 use SportTrackerConnector\Core\Workout\SportMapperInterface;
 use SportTrackerConnector\Core\Workout\Track;
 use SportTrackerConnector\Core\Workout\TrackPoint;
 use SportTrackerConnector\Core\Workout\Workout;
+use SportTrackerConnector\Core\Workout\WorkoutIdInterface;
+use SportTrackerConnector\Core\Workout\WorkoutSummary;
 use SportTrackerConnector\Endomondo\API\Workouts;
 
 /**
  * Endomondo tracker.
  */
-class EndomondoTracker extends AbstractTracker
+final class EndomondoTracker implements TrackerInterface
 {
     /**
      * The Endomondo Workouts API.
@@ -38,52 +37,18 @@ class EndomondoTracker extends AbstractTracker
     /**
      * {@inheritdoc}
      */
-    public function workout($idWorkout) : Workout
-    {
-        $json = $this->endomondoWorkouts->getWorkout($idWorkout);
-
-        $workout = new Workout();
-        $sport = $this->sportMapper()->sportFromCode((string)$json['sport']);
-        $track = new Track(array(), $sport);
-
-        if (array_key_exists('points', $json)) {
-            foreach ($json['points'] as $point) {
-                $trackPoint = new TrackPoint(
-                    $point['lat'],
-                    $point['lng'],
-                    new DateTime($point['time'])
-                );
-                if (array_key_exists('alt', $point)) {
-                    $trackPoint->setElevation($point['alt']);
-                }
-                if (array_key_exists('hr', $point)) {
-                    $trackPoint->addExtension(new HR($point['hr']));
-                }
-
-                $track->addTrackPoint($trackPoint);
-            }
-        }
-
-        $workout->addTrack($track);
-
-        return $workout;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function workouts(DateTime $startDate, DateTime $endDate) : array
+    public function list(\DateTimeImmutable $startDate, \DateTimeImmutable $endDate): array
     {
         $list = array();
         $data = $this->endomondoWorkouts->listWorkouts($startDate, $endDate);
         foreach ($data as $workout) {
-            $startDateTime = DateTime::createFromFormat(
+            $startDateTime = \DateTimeImmutable::createFromFormat(
                 'Y-m-d H:i:s \U\T\C',
                 $workout['start_time'],
-                new DateTimeZone('UTC')
+                new \DateTimeZone('UTC')
             );
-            $list[] = new TrackerListWorkoutsResult(
-                (string)$workout['id'],
+            $list[] = new WorkoutSummary(
+                new WorkoutId((string)$workout['id']),
                 $this->sportMapper()->sportFromCode((string)$workout['sport']),
                 $startDateTime
             );
@@ -95,7 +60,59 @@ class EndomondoTracker extends AbstractTracker
     /**
      * {@inheritdoc}
      */
-    public function post(Workout $workout) : bool
+    public function workout(WorkoutIdInterface $idWorkout): Workout
+    {
+        $json = $this->endomondoWorkouts->getWorkout($idWorkout->toString());
+
+        $trackPoints = [];
+        if (array_key_exists('points', $json)) {
+            foreach ($json['points'] as $point) {
+                $elevation = null;
+                if (array_key_exists('alt', $point)) {
+                    $elevation = $point['alt'];
+                }
+                $extensions = [];
+                if (array_key_exists('hr', $point)) {
+                    $extensions[] = HR::fromValue($point['hr']);
+                }
+                $trackPoint = TrackPoint::with(
+                    $point['lat'],
+                    $point['lng'],
+                    new \DateTimeImmutable($point['time']),
+                    $elevation,
+                    $extensions
+                );
+
+                $trackPoints[] = $trackPoint;
+            }
+        }
+
+        $sport = SportMapperInterface::OTHER;
+        if (isset($json['sport'])) {
+            $sport = $this->sportMapper()->sportFromCode((string)$json['sport']);
+        }
+        $track = new Track($trackPoints, $sport);
+
+        return new Workout([$track]);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function workouts(\DateTimeImmutable $startDate, \DateTimeImmutable $endDate): array
+    {
+        $list = $this->list($startDate, $endDate);
+        $workouts = array();
+        foreach ($list as $workoutSummary) {
+            $workouts[] = $this->workout($workoutSummary->workoutId());
+        }
+        return $workouts;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function save(Workout $workout): bool
     {
         $workoutIds = array();
         foreach ($workout->tracks() as $track) {
@@ -110,7 +127,7 @@ class EndomondoTracker extends AbstractTracker
     /**
      * {@inheritdoc}
      */
-    protected function constructSportMapper() : SportMapperInterface
+    public function sportMapper(): SportMapperInterface
     {
         return new SportMapper();
     }
@@ -118,7 +135,7 @@ class EndomondoTracker extends AbstractTracker
     /**
      * {@inheritdoc}
      */
-    public static function ID() : string
+    public static function ID(): string
     {
         return 'endomondo';
     }

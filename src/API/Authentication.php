@@ -8,9 +8,9 @@ use GuzzleHttp\Client;
 use Ramsey\Uuid\Uuid;
 use SportTrackerConnector\Core\Tracker\Exception\InvalidCredentialsException;
 
-class Authentication
+final class Authentication
 {
-    const URL_AUTHENTICATE = 'https://api.mobile.endomondo.com/mobile/auth';
+    private const URL_AUTHENTICATE = 'https://api.mobile.endomondo.com/mobile/auth';
 
     /**
      * @var string
@@ -30,12 +30,12 @@ class Authentication
      *
      * @return string
      */
-    public function token() : string
+    public function token(): string
     {
         return $this->token;
     }
 
-    public static function fromToken(string $token) : Authentication
+    public static function withToken(string $token): Authentication
     {
         return new static($token);
     }
@@ -47,7 +47,7 @@ class Authentication
      * @return Authentication If there is an error making the request.
      * @throws \SportTrackerConnector\Core\Tracker\Exception\InvalidCredentialsException
      */
-    public static function fromUsernameAndPassword(string $username, string $password, Client $client) : Authentication
+    public static function withUsernameAndPassword(string $username, string $password, Client $client): Authentication
     {
         $response = $client->get(
             self::URL_AUTHENTICATE,
@@ -55,7 +55,7 @@ class Authentication
                 'query' => array(
                     'country' => 'GB',
                     'action' => 'pair',
-                    'deviceId' => (string)Uuid::uuid5(Uuid::NAMESPACE_DNS, gethostname()),
+                    'deviceId' => Uuid::uuid5(Uuid::NAMESPACE_DNS, gethostname())->toString(),
                     'email' => $username,
                     'password' => $password,
                 )

@@ -22,13 +22,13 @@ class AuthenticationTest extends \PHPUnit_Framework_TestCase
     public function testAuthenticationFromToken()
     {
         $token = 'my_token';
-        $authentication = Authentication::fromToken($token);
+        $authentication = Authentication::withToken($token);
 
         self::assertSame($token, $authentication->token());
         self::assertSame($token, (string)$authentication);
     }
 
-    public function testAuthenticationFromUsernameAndPasswordThrowsClientExceptionOnBadResponse()
+    public function testAuthenticationWithUsernameAndPasswordThrowsClientExceptionOnBadResponse()
     {
         $mockHandler = new MockHandler(
             [
@@ -41,10 +41,10 @@ class AuthenticationTest extends \PHPUnit_Framework_TestCase
 
         $this->expectException(ClientException::class);
 
-        Authentication::fromUsernameAndPassword('username', 'password', $client);
+        Authentication::withUsernameAndPassword('username', 'password', $client);
     }
 
-    public function testAuthenticationFromUsernameAndPasswordThrowsInvalidCredentialsExceptionOnBadCredentials()
+    public function testAuthenticationWithUsernameAndPasswordThrowsInvalidCredentialsExceptionOnBadCredentials()
     {
         $mockHandler = new MockHandler(
             [
@@ -57,10 +57,10 @@ class AuthenticationTest extends \PHPUnit_Framework_TestCase
 
         $this->expectException(InvalidCredentialsException::class);
 
-        Authentication::fromUsernameAndPassword('username', 'password', $client);
+        Authentication::withUsernameAndPassword('username', 'password', $client);
     }
 
-    public function testAuthenticationFromUsernameAndPassword()
+    public function testAuthenticationWithUsernameAndPassword()
     {
         $token = 'my_token';
 
@@ -77,7 +77,7 @@ class AuthenticationTest extends \PHPUnit_Framework_TestCase
 
         $handler = HandlerStack::create($mockHandler);
         $client = new Client(['handler' => $handler]);
-        $authentication = Authentication::fromUsernameAndPassword('username', 'password', $client);
+        $authentication = Authentication::withUsernameAndPassword('username', 'password', $client);
 
         self::assertSame($token, $authentication->token());
         self::assertSame($token, (string)$authentication);

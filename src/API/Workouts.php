@@ -15,20 +15,20 @@ use SportTrackerConnector\Endomondo\API\Exception\BadResponseException;
  */
 class Workouts
 {
-    const URL_BASE = 'https://api.mobile.endomondo.com/mobile';
-    const URL_WORKOUTS = 'https://api.mobile.endomondo.com/mobile/api/workouts';
-    const URL_WORKOUT_GET = 'https://api.mobile.endomondo.com/mobile/api/workout/get';
-    const URL_WORKOUT_POST = 'https://api.mobile.endomondo.com/mobile/api/workout/post';
-    const URL_TRACK = 'https://api.mobile.endomondo.com/mobile/track';
-    const URL_FRIENDS = 'https://api.mobile.endomondo.com/mobile/friends';
+    private const URL_BASE = 'https://api.mobile.endomondo.com/mobile';
+    private const URL_WORKOUTS = 'https://api.mobile.endomondo.com/mobile/api/workouts';
+    private const URL_WORKOUT_GET = 'https://api.mobile.endomondo.com/mobile/api/workout/get';
+    private const URL_WORKOUT_POST = 'https://api.mobile.endomondo.com/mobile/api/workout/post';
+    private const URL_TRACK = 'https://api.mobile.endomondo.com/mobile/track';
+    private const URL_FRIENDS = 'https://api.mobile.endomondo.com/mobile/friends';
 
-    const INSTRUCTION_PAUSE = 0;
-    const INSTRUCTION_RESUME = 1;
-    const INSTRUCTION_START = 2;
-    const INSTRUCTION_STOP = 3;
-    const INSTRUCTION_NONE = 4;
-    const INSTRUCTION_GPS_OFF = 5;
-    const INSTRUCTION_LAP = 6;
+    private const INSTRUCTION_PAUSE = 0;
+    private const INSTRUCTION_RESUME = 1;
+    private const INSTRUCTION_START = 2;
+    private const INSTRUCTION_STOP = 3;
+    private const INSTRUCTION_NONE = 4;
+    private const INSTRUCTION_GPS_OFF = 5;
+    private const INSTRUCTION_LAP = 6;
 
     /**
      * Endomondo authentication token.
@@ -62,7 +62,7 @@ class Workouts
      * @return array
      * @throws \RuntimeException
      */
-    public function getWorkout(string $idWorkout) : array
+    public function getWorkout($idWorkout): array
     {
         $response = $this
             ->client
@@ -89,11 +89,11 @@ class Workouts
     /**
      * Get a list of workouts in a date interval.
      *
-     * @param \DateTime $startDate The start date for the workouts.
-     * @param \DateTime $endDate The end date for the workouts.
+     * @param \DateTimeImmutable $startDate The start date for the workouts.
+     * @param \DateTimeImmutable $endDate The end date for the workouts.
      * @return array
      */
-    public function listWorkouts(\DateTime $startDate, \DateTime $endDate) : array
+    public function listWorkouts(\DateTimeImmutable $startDate, \DateTimeImmutable $endDate): array
     {
         $response = $this
             ->client
@@ -136,12 +136,8 @@ class Workouts
             $data = array();
             /** @var TrackPoint[] $trackPoints */
             foreach ($trackPoints as $trackPoint) {
-                if ($trackPoint->hasDistance() === true) {
-                    $distance = $trackPoint->distance();
-                } elseif ($previousPoint !== null) {
-                    $distance += $trackPoint->distanceFromPoint($previousPoint);
-                }
                 if ($previousPoint !== null) {
+                    $distance += $trackPoint->distanceFromPoint($previousPoint);
                     $speed = $trackPoint->speed($previousPoint);
                 }
 
@@ -198,7 +194,7 @@ class Workouts
      * @return string The workout ID.
      * @throws \RuntimeException
      */
-    private function postWorkoutData($deviceWorkoutId, $sport, $duration, array $data) : string
+    private function postWorkoutData($deviceWorkoutId, $sport, $duration, array $data): string
     {
         $body = \GuzzleHttp\Psr7\stream_for(gzencode(implode("\n", $data)));
 
@@ -242,7 +238,7 @@ class Workouts
      * @param float $speed The speed the point in km/h from the previous point.
      * @return string
      */
-    private function flattenTrackPoint(TrackPoint $trackPoint, $distance, $speed) : string
+    private function flattenTrackPoint(TrackPoint $trackPoint, $distance, $speed): string
     {
         $dateTime = clone $trackPoint->dateTime();
         $dateTime->setTimezone(new \DateTimeZone('UTC'));
@@ -268,7 +264,7 @@ class Workouts
      *  2 - running
      *  3 - stop
      *
-     * @param \DateTime $dateTime
+     * @param \DateTimeImmutable $dateTime
      * @param integer $type The post type (0-6). Don't know what they mean.
      * @param string $lat The latitude of the point.
      * @param string $lon The longitude of the point.
@@ -280,7 +276,7 @@ class Workouts
      * @return string
      */
     private function formatEndomondoTrackPoint(
-        \DateTime $dateTime,
+        \DateTimeImmutable $dateTime,
         $type,
         $lat = null,
         $lon = null,
@@ -289,8 +285,7 @@ class Workouts
         $elevation = null,
         $heartRate = null,
         $cadence = null
-    ) : string
-    {
+    ): string {
         $dateTime = clone $dateTime;
         $dateTime->setTimezone(new \DateTimeZone('UTC'));
 

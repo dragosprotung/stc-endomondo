@@ -12,7 +12,6 @@ use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
 use SportTrackerConnector\Core\Workout\Track;
 use SportTrackerConnector\Core\Workout\TrackPoint;
-use SportTrackerConnector\Core\Workout\Workout;
 use SportTrackerConnector\Endomondo\API\Authentication;
 use SportTrackerConnector\Endomondo\API\Exception\BadResponseException;
 use SportTrackerConnector\Endomondo\API\Workouts;
@@ -25,7 +24,7 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
 {
     public function testGetWorkoutThrowsExceptionOnInvalidAuthentication()
     {
-        $authentication = Authentication::fromToken('wrong_token');
+        $authentication = Authentication::withToken('wrong_token');
 
         $mockHandler = new MockHandler(
             [
@@ -44,7 +43,7 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
 
     public function testGetWorkoutSuccess()
     {
-        $authentication = Authentication::fromToken('token');
+        $authentication = Authentication::withToken('token');
 
         $responseFixtureFile = __DIR__ . '/Fixtures/' . $this->getName() . '.json';
         $mockHandler = new MockHandler(
@@ -63,7 +62,7 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
 
     public function testListWorkoutsWithNoMoreData()
     {
-        $authentication = Authentication::fromToken('token');
+        $authentication = Authentication::withToken('token');
 
         $mockHandler = new MockHandler(
             [
@@ -74,7 +73,7 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
         $client = new Client(['handler' => $handler]);
 
         $workouts = new Workouts($authentication, $client);
-        $actual = $workouts->listWorkouts(new \DateTime('-2 weeks'), new \DateTime('now'));
+        $actual = $workouts->listWorkouts(new \DateTimeImmutable('-2 weeks'), new \DateTimeImmutable('now'));
         static::assertJsonStringEqualsJsonFile(
             __DIR__ . '/Expected/' . $this->getName() . '.json',
             json_encode($actual)
@@ -83,14 +82,10 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
 
     public function testPostTrackSuccess()
     {
-        $trackPoints = array_merge($this->getTrackPointMocks(150, true), $this->getTrackPointMocks(140));
-
+        $trackPoints = array_merge($this->getTrackPointMocks(150), $this->getTrackPointMocks(140));
         $track = new Track($trackPoints);
 
-        $workout = $this->createMock(Workout::class);
-        $workout->expects(static::any())->method('tracks')->will(static::returnValue(array($track)));
-
-        $authentication = Authentication::fromToken('token');
+        $authentication = Authentication::withToken('token');
 
         $container = array();
         $history = Middleware::history($container);
@@ -129,14 +124,13 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
      * Get a number of track point mocks.
      *
      * @param integer $number Number of mocks to get.
-     * @param boolean $distance Flag if distance should be present in the track point.
-     * @return \SportTrackerConnector\Core\Workout\TrackPoint[]
+     * @return TrackPoint[]
      */
-    private function getTrackPointMocks(int $number, bool $distance = false)
+    private function getTrackPointMocks(int $number)
     {
         $mocks = array();
         for ($i = 0; $i < $number; $i++) {
-            $mocks[] = $this->getTrackPointMock($distance ? $i : null);
+            $mocks[] = $this->getTrackPointMock();
         }
 
         return $mocks;
@@ -145,45 +139,28 @@ class WorkoutsTest extends \PHPUnit_Framework_TestCase
     /**
      * Get a track point mock.
      *
-     * @param integer $distance The distance for the point.
-     * @return \SportTrackerConnector\Core\Workout\TrackPoint
+     * @return TrackPoint
      */
-    private function getTrackPointMock($distance = null)
+    private function getTrackPointMock()
     {
         static $call = 1;
 
-        $dateTime = new \DateTime('2016-01-01 00:00:00');
-        $dateTime->add(\DateInterval::createFromDateString('+' . $call . ' seconds'));
+        $dateTime = new \DateTimeImmutable('2016-01-01 00:00:00');
+        $dateTime = $dateTime->add(\DateInterval::createFromDateString('+' . $call . ' seconds'));
 
         $latitude = 5352479;
         $longitude = 10000000;
         $elevation = $call % 1000;
 
-        $trackPointMock = $this->createMock(TrackPoint::class);
-        $trackPointMock
-            ->expects(static::any())
-            ->method('dateTime')
-            ->will(static::returnValue($dateTime));
-        $trackPointMock
-            ->expects(static::any())
-            ->method('latitude')
-            ->will(static::returnValue(($latitude + $call) / 100000));
-        $trackPointMock
-            ->expects(static::any())
-            ->method('longitude')
-            ->will(static::returnValue(($longitude + $call) / 1000000));
-        $trackPointMock
-            ->expects(static::any())
-            ->method('elevation')
-            ->will(static::returnValue($elevation));
-        if ($distance !== null) {
-            $trackPointMock->expects(static::any())->method('hasDistance')->will(static::returnValue(true));
-            $trackPointMock->expects(static::any())->method('distance')->will(static::returnValue($distance));
-        }
-        $trackPointMock->expects(static::any())->method('hasExtension')->with('HR')->will(static::returnValue(false));
+        $trackPoint = TrackPoint::with(
+            ($latitude + $call) / 100000,
+            ($longitude + $call) / 1000000,
+            $dateTime,
+            $elevation
+        );
 
         $call++;
 
-        return $trackPointMock;
+        return $trackPoint;
     }
 }

@@ -15,12 +15,14 @@
     }
   ],
   "require": {
+    "php": "^7.1",
     "dragosprotung/stc-core": "~2.0@dev",
+    "beberlei/assert": "^2.6",
     "guzzlehttp/guzzle": "^6.2",
     "ramsey/uuid": "^3.5"
   },
   "require-dev": {
-    "phpunit/phpunit": "^5.5"
+    "phpunit/phpunit": "^5.7"
   },
   "autoload": {
     "psr-4": {
